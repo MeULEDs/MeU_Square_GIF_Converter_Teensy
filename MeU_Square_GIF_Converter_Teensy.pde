@@ -55,6 +55,14 @@ String Status = " ";
 //variable to access ControlP5 class
 ControlP5 cp5;
 
+
+//****************************
+//Change GIF dimensions here:
+
+final int HEIGHT = 16;
+final int WIDTH = 16;
+//****************************
+
 void setup() {
  
   //set up the screen size and layout the buttons
@@ -170,7 +178,7 @@ public void Run() {
       
       //resize screen to fit 16x16 gifs so processing can read into array 
       //and translate into Arduino sketch
-      size(16,16);
+      size(WIDTH,HEIGHT);
       animation = Gif.getPImages(this, GIFPath);
       try {
         
@@ -225,7 +233,7 @@ void WriteHeader() {
   
   output.println("#define PIN 6");
   
-  output.println("Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(16, 16, PIN, NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG, NEO_GRB + NEO_KHZ800);");
+  output.println("Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix("+WIDTH+","+HEIGHT+", PIN, NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG, NEO_GRB + NEO_KHZ800);");
   
 
 
@@ -263,9 +271,9 @@ void WriteLoopFile(int NumberOfFrames, String VarName) {
     if (i == 0) output.println("  if (FrameNumber == " + i + ") {");
     else output.println("   else if (FrameNumber == " + i + ") {");
     
-    output.println("      for (byte y = 0; y < 16; y++) {");
-    output.println("        for (byte x = 0; x < 16; x++) {");
-    output.println("          byte loc = x + y*16;");
+    output.println("      for (byte y = 0; y < "+HEIGHT+"; y++) {");
+    output.println("        for (byte x = 0; x < "+WIDTH+"; x++) {");
+    output.println("          byte loc = x + y*"+WIDTH+";");
     output.println("          matrix.drawPixel(x, y, drawRGB24toRGB565(("+ VarName + "RedFrame" + i + "[loc]), (" + VarName + "GreenFrame" + i + "[loc]), (" + VarName + "BlueFrame" + i + "[loc])));"); 
     output.println("        }");
     output.println("      }");
@@ -285,7 +293,7 @@ void WriteLoopFile(int NumberOfFrames, String VarName) {
 void WriteFile(PImage img, int FrameNumber, String VarName) {
   //img = loadImage(ImageFileName);
   img.loadPixels(); 
-  output.print("const unsigned char " + VarName + "RedFrame" + FrameNumber + "[16*16] = ");
+  output.print("const unsigned char " + VarName + "RedFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
   output.print("{");
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
@@ -300,7 +308,7 @@ void WriteFile(PImage img, int FrameNumber, String VarName) {
   }
   
   output.println("};");
-  output.print("const unsigned char " + VarName + "GreenFrame" + FrameNumber + "[16*16] = ");
+  output.print("const unsigned char " + VarName + "GreenFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
   output.print("{");
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
@@ -316,7 +324,7 @@ void WriteFile(PImage img, int FrameNumber, String VarName) {
   
   output.println("};");
   
-  output.print("const unsigned char " + VarName + "BlueFrame" + FrameNumber + "[16*16] = ");
+  output.print("const unsigned char " + VarName + "BlueFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
   output.print("{");
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
