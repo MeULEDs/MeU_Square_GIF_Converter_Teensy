@@ -239,14 +239,15 @@ void WriteHeader() {
 
 }
 void WriteBody() {
-  output.println("Metro AnimateTimer = Metro(10);");
+  output.println("Metro AnimateTimer = Metro(72);");
   output.println("byte FrameNumber = 0;");
   output.println("void setup() {");
   output.println("  Serial.begin(115200);");
   output.println("  matrix.begin();");
-  output.println("  matrix.setBrightness(50);");
+  output.println("  matrix.setBrightness(40);");
   output.println("  matrix.fillScreen(0);");
   output.println("  matrix.show();");
+  output.println("  delay(100);");
   //output.println("  AnimateTimer.setInterval(100, TimerEvent);");
   output.println("}");
   output.println("void loop() {");
