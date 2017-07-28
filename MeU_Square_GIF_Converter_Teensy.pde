@@ -2,6 +2,7 @@
 //Filenames: MeU_Square_GIF_Converter_Teensy.pde
 //Authors: Robert Tu
 //Date Created: February 5, 2014
+//Updated: Friday 28, 2017 by Alberto Sarullo
 //Notes:
 /*
   
@@ -178,16 +179,49 @@ public void Run() {
       
       //resize screen to fit 16x16 gifs so processing can read into array 
       //and translate into Arduino sketch
-      size(WIDTH,HEIGHT);
+      //size(WIDTH,HEIGHT);
       animation = Gif.getPImages(this, GIFPath);
+      
+      GifDecoder gifDecoder = new GifDecoder();
+      gifDecoder.read(this.createInput(GIFPath));
+      int frameNumber = gifDecoder.getFrameCount();
+      println("frameNumber = "+frameNumber);
+      
+      
       try {
+        //Gif.delays;
         
         output = createWriter(OutputPath+"/"+ArduinoFileName+"/"+ArduinoFileName + ".ino");
         WriteHeader();
-            
+        
+        
+        
+        output.println("const unsigned char animFrameChannelColors[" + animation.length + "][3][256] = {");
         for (int i = 0; i < animation.length; i++) {
+         
           WriteFile(animation[i], i, ArduinoFileName);
+          if (i < animation.length-1) {
+              output.print(",");
+          }
+          output.println("");
+           
         }
+       
+        output.println("};");
+        
+        
+        output.print("const unsigned char animFrameDelays[" + animation.length + "] = {");
+        for (int i = 0; i < animation.length; i++) {
+          int delay = gifDecoder.getDelay(i);
+          println("frame "+i+": " + delay + "ms");
+          output.print(delay);
+          if (i < animation.length-1) {
+              output.print(",");
+          }
+         
+        }
+        
+        output.println("};");
         
         WriteBody();
         WriteLoopFile(animation.length, ArduinoFileName);
@@ -196,19 +230,19 @@ public void Run() {
         output.close();
         
         //retore the screen size
-        size(550, 650);
+        // size(550, 650);
         Status = "File Conversion Complete";
       } catch (Exception e) {
         
         //restore the screen size
-        size(550, 650);
+        //size(550, 650);
         e.printStackTrace();
         Status = "THIS IS NOT A VALID GIF!";
         GIFPath = "Choose new file";
       }
         
     } catch (Exception e) {
-      size(550, 650);
+      //size(550, 650);
       Status = "NOT A VALID GIF FILE!";
       GIFPath = "Choose new file";
     }
@@ -226,12 +260,11 @@ void WriteHeader() {
   output.println("#include <Adafruit_GFX.h>");
   output.println("#include <Adafruit_NeoMatrix.h>");
   output.println("#include <Adafruit_NeoPixel.h>");
-  output.println("#include <Metro.h>");
   output.println("#ifndef PSTR");
   output.println("  #define PSTR"); // Make Arduino Due happy
   output.println("#endif");
   
-  output.println("#define PIN 6");
+  output.println("#define PIN 2");
   
   output.println("Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix("+WIDTH+","+HEIGHT+", PIN, NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG, NEO_GRB + NEO_KHZ800);");
   
@@ -239,7 +272,7 @@ void WriteHeader() {
 
 }
 void WriteBody() {
-  output.println("Metro AnimateTimer = Metro(72);");
+  // output.println("Metro AnimateTimer = Metro(72);");
   output.println("byte FrameNumber = 0;");
   output.println("void setup() {");
   output.println("  Serial.begin(115200);");
@@ -252,10 +285,19 @@ void WriteBody() {
   output.println("}");
   output.println("void loop() {");
   //output.println("  AnimateTimer.run();");
-  output.println("  if (AnimateTimer.check() == 1) {");
-  output.println("    TimerEvent();");
-  output.println("  }");
+  //output.println("  if (AnimateTimer.check() == 1) {");
+  //output.println("    TimerEvent();");
+  //output.println("  }");
   //output.println("  matrix.show();");
+ 
+  output.println("if (FrameNumber >= 1) {");
+  output.println("  FrameNumber = 0;");
+  output.println("} else {");
+  output.println("  FrameNumber++;"); 
+  output.println("}");
+  output.println("TimerEvent();");
+  // output.println("readingIn = analogRead(AnalogIn);");
+  output.println("delay(300);");
   output.println("}");
   output.println("uint16_t drawRGB24toRGB565(byte r, byte g, byte b) {");
   output.println("  return ((r / 8) << 11) | ((g / 4) << 5) | (b / 8);");
@@ -268,25 +310,17 @@ void WriteLoopFile(int NumberOfFrames, String VarName) {
   int NextFrame;
   output.println("void TimerEvent() {");
   
-  for (int i = 0; i < NumberOfFrames; i++) {
-    if (i == 0) output.println("  if (FrameNumber == " + i + ") {");
-    else output.println("   else if (FrameNumber == " + i + ") {");
-    
-    output.println("      for (byte y = 0; y < "+HEIGHT+"; y++) {");
-    output.println("        for (byte x = 0; x < "+WIDTH+"; x++) {");
-    output.println("          byte loc = x + y*"+WIDTH+";");
-    output.println("          matrix.drawPixel(x, y, drawRGB24toRGB565(("+ VarName + "RedFrame" + i + "[loc]), (" + VarName + "GreenFrame" + i + "[loc]), (" + VarName + "BlueFrame" + i + "[loc])));"); 
-    output.println("        }");
-    output.println("      }");
-    
-    if (i == NumberOfFrames - 1) output.println("      FrameNumber = 0;");
-    else { 
-      NextFrame = i + 1;
-      output.println("      FrameNumber = " + NextFrame + ";");
-      output.println("      Serial.println(\" Frame " + i + " completed\");");
-    }
-    output.println("  }");
-  }
+  output.println("  for (byte y = 0; y < 16; y++) {");
+  output.println("     for (byte x = 0; x < 16; x++) {");
+  output.println("        byte loc = x + y*16;");
+  output.println("        matrix.drawPixel(x, y, drawRGB24toRGB565(");
+  output.println("          (animFrameChannelColors[FrameNumber][0][loc]),");
+  output.println("          (animFrameChannelColors[FrameNumber][1][loc]),");
+  output.println("          (animFrameChannelColors[FrameNumber][2][loc])");
+  output.println("        ));");
+  output.println("     }");
+  output.println("  }");
+  
   output.println("  matrix.show();");
   output.println("}");
 }
@@ -294,11 +328,13 @@ void WriteLoopFile(int NumberOfFrames, String VarName) {
 void WriteFile(PImage img, int FrameNumber, String VarName) {
   //img = loadImage(ImageFileName);
   img.loadPixels(); 
-  output.print("const unsigned char " + VarName + "RedFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
-  output.print("{");
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      int loc = x + y*width;
+  
+  //output.print("const unsigned char " + VarName + "RedFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
+  output.println("  {");
+  output.print("    {");
+  for (int y = 0; y < 16; y++) {
+    for (int x = 0; x < 16; x++) {
+      int loc = x + y*16;
       
       // The functions red(), green(), and blue() pull out the 3 color components from a pixel.
       int r = int(red(img.pixels[loc]));
@@ -308,12 +344,12 @@ void WriteFile(PImage img, int FrameNumber, String VarName) {
     }
   }
   
-  output.println("};");
-  output.print("const unsigned char " + VarName + "GreenFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
-  output.print("{");
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      int loc = x + y*width;
+  output.println("},");
+ 
+  output.print("    {");
+  for (int y = 0; y < 16; y++) {
+    for (int x = 0; x < 16; x++) {
+      int loc = x + y*16;
       
       // The functions red(), green(), and blue() pull out the 3 color components from a pixel.
       int g = int(green(img.pixels[loc]));
@@ -323,13 +359,12 @@ void WriteFile(PImage img, int FrameNumber, String VarName) {
     }
   }
   
-  output.println("};");
+  output.println("},");
   
-  output.print("const unsigned char " + VarName + "BlueFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
-  output.print("{");
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      int loc = x + y*width;
+  output.print("    {");
+  for (int y = 0; y < 16; y++) {
+    for (int x = 0; x < 16; x++) {
+      int loc = x + y*16;
       
       // The functions red(), green(), and blue() pull out the 3 color components from a pixel.
       int b = int(blue(img.pixels[loc]));
@@ -339,8 +374,8 @@ void WriteFile(PImage img, int FrameNumber, String VarName) {
     }
   }
   
-  output.println("};");
+  output.println("}");
+  output.print("  }");
 
 
 }
-
