@@ -297,7 +297,7 @@ void WriteBody() {
   output.println("}");
   output.println("TimerEvent();");
   // output.println("readingIn = analogRead(AnalogIn);");
-  output.println("delay(300);");
+  // output.println("delay(300);");
   output.println("}");
   output.println("uint16_t drawRGB24toRGB565(byte r, byte g, byte b) {");
   output.println("  return ((r / 8) << 11) | ((g / 4) << 5) | (b / 8);");
@@ -322,6 +322,7 @@ void WriteLoopFile(int NumberOfFrames, String VarName) {
   output.println("  }");
   
   output.println("  matrix.show();");
+  output.println("  delay(animFrameDelays[FrameNumber]);");
   output.println("}");
 }
     
