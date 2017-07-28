@@ -290,7 +290,7 @@ void WriteBody() {
   //output.println("  }");
   //output.println("  matrix.show();");
  
-  output.println("if (FrameNumber >= 1) {");
+  output.println("if (FrameNumber >= sizeof(animFrameDelays)-1) {");
   output.println("  FrameNumber = 0;");
   output.println("} else {");
   output.println("  FrameNumber++;"); 
