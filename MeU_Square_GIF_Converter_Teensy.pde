@@ -240,7 +240,7 @@ void WriteHeader() {
 }
 void WriteBody() {
   output.println("Metro AnimateTimer = Metro(72);");
-  output.println("byte FrameNumber = 0;");
+  output.println("uint16_t FrameNumber = 0;");
   output.println("void setup() {");
   output.println("  Serial.begin(115200);");
   output.println("  matrix.begin();");
@@ -272,9 +272,9 @@ void WriteLoopFile(int NumberOfFrames, String VarName) {
     if (i == 0) output.println("  if (FrameNumber == " + i + ") {");
     else output.println("   else if (FrameNumber == " + i + ") {");
     
-    output.println("      for (byte y = 0; y < "+HEIGHT+"; y++) {");
-    output.println("        for (byte x = 0; x < "+WIDTH+"; x++) {");
-    output.println("          byte loc = x + y*"+WIDTH+";");
+    output.println("      for (uint8_t y = 0; y < "+HEIGHT+"; y++) {");
+    output.println("        for (uint8_t x = 0; x < "+WIDTH+"; x++) {");
+    output.println("          uint16_t loc = x + y*"+WIDTH+";");
     output.println("          matrix.drawPixel(x, y, drawRGB24toRGB565(("+ VarName + "RedFrame" + i + "[loc]), (" + VarName + "GreenFrame" + i + "[loc]), (" + VarName + "BlueFrame" + i + "[loc])));"); 
     output.println("        }");
     output.println("      }");
@@ -295,48 +295,45 @@ void WriteFile(PImage img, int FrameNumber, String VarName) {
   //img = loadImage(ImageFileName);
   img.loadPixels(); 
   output.print("const unsigned char " + VarName + "RedFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
-  output.print("{");
+  output.println("{");
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
       int loc = x + y*width;
       
       // The functions red(), green(), and blue() pull out the 3 color components from a pixel.
       int r = int(red(img.pixels[loc]));
-      if (loc < 255) output.print(r+",");
-      else output.print(r);
-     
+      output.print(r+",");
     }
+    output.println("");
   }
   
   output.println("};");
   output.print("const unsigned char " + VarName + "GreenFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
-  output.print("{");
+  output.println("{");
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
       int loc = x + y*width;
       
       // The functions red(), green(), and blue() pull out the 3 color components from a pixel.
       int g = int(green(img.pixels[loc]));
-      if (loc < 255) output.print(g+",");
-      else output.print(g);
-     
+      output.print(g+",");
     }
+    output.println("");
   }
   
   output.println("};");
   
   output.print("const unsigned char " + VarName + "BlueFrame" + FrameNumber + "["+WIDTH+"*"+HEIGHT+"] = ");
-  output.print("{");
+  output.println("{");
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
       int loc = x + y*width;
       
       // The functions red(), green(), and blue() pull out the 3 color components from a pixel.
       int b = int(blue(img.pixels[loc]));
-      if (loc < 255) output.print(b+",");
-      else output.print(b);
-     
+      output.print(b+",");
     }
+    output.println("");
   }
   
   output.println("};");
